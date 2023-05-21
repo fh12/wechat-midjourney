@@ -10,12 +10,29 @@ export class Bot {
 
     async onMessage(message: Message) {
         const date = message.date();
-        const rawText = message.text();
+        let rawText = message.text();
         const talker = message.talker();
         const room = message.room();
         if (!room) {
             return;
         }
+        // 有新用户加入群聊时，发送欢迎语
+        // if (/加入了群聊/.test(message.text()) || /加入群聊/.test(message.text())){
+        //     await room.say(`欢迎新朋友 @${talker.name()} 加入群聊, 本群福利一，无需魔法免费使用chatgpt，网址：https://www.xiaohuiai.top，本群福利二，限时体验midjourney绘画`);
+        //     return;
+        // }
+        // 使用正则表达式匹配原始信息
+        // const pattern = /\[\/mj(.+?)\](.+?)\[\/mj\]/;
+        // const match = rawText.match(pattern);
+        // if(match) {
+        //     // 提取链接和文本
+        //     const link = match[1].trim();
+        //     const text = match[2].trim();
+        //     console.log("link", link)
+        //     console.log("text", text)
+        //     rawText = `/mj ${text} ${link}`;
+        // }
+        
         const topic = await room.topic();
         if (isNonsense(talker, message.type(), rawText)) {
             return;
@@ -24,7 +41,7 @@ export class Bot {
             const result = "欢迎使用MJ机器人\n" +
                 "------------------------------\n"
                 + "🎨 生成图片命令\n"
-                + "输入: /imagine prompt\n"
+                + "输入: /mj prompt\n"
                 + "prompt 即你向mj提的绘画需求\n"
                 + "------------------------------\n"
                 + "🌈 变换图片命令\n"
@@ -34,7 +51,7 @@ export class Bot {
                 + "------------------------------\n"
                 + "📕 附加参数 \n"
                 + "1.解释：附加参数指的是在prompt后携带的参数，可以使你的绘画更加别具一格\n"
-                + "· 输入 /imagine prompt --v 5 --ar 16:9\n"
+                + "· 输入 /mj prompt --v 5 --ar 16:9\n"
                 + "2.使用：需要使用--key value ，key和value之间需要空格隔开，每个附加参数之间也需要空格隔开\n"
                 + "------------------------------\n"
                 + "📗 附加参数列表\n"
@@ -52,14 +69,14 @@ export class Bot {
             return;
         }
         const talkerName = talker.name();
-        console.log(`${formatDateStandard(date)} - [${topic}] ${talkerName}: ${rawText}`);
-        if (!rawText.startsWith('/imagine ') && !rawText.startsWith('/up ')) {
+        if (!rawText.startsWith('/mj ') && !rawText.startsWith('/up ')) {
             return;
         }
+        // console.log(`${formatDateStandard(date)} - [${topic}] ${talkerName}: ${rawText}`);
         if (isProhibited(rawText)) {
             const content = `@${talkerName} \n❌ 任务被拒绝，可能包含违禁词`;
             await room.say(content);
-            console.log(`${formatDateStandard(date)} - [${topic}] ${this.botName}: ${content}`);
+            // console.log(`${formatDateStandard(date)} - [${topic}] ${this.botName}: ${content}`);
             return;
         }
         let errorMsg;
@@ -68,14 +85,16 @@ export class Bot {
             errorMsg = await submitTask({
                 state: topic + ':' + talkerName,
                 action: "UV",
-                content: content
+                content: content,
+                notifyHook:"http://localhost:4120/notify"
             });
-        } else if (rawText.startsWith('/imagine ')) {
-            const prompt = rawText.substring(9);
+        } else if (rawText.startsWith('/mj ')) {
+            const prompt = rawText.substring(4);
             errorMsg = await submitTask({
                 state: topic + ':' + talkerName,
                 action: "IMAGINE",
-                prompt: prompt
+                prompt: prompt,
+                notifyHook:"http://localhost:4120/notify"
             });
         }
         if (errorMsg) {

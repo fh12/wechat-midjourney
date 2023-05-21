@@ -1,8 +1,10 @@
 import { WechatyBuilder } from "wechaty";
+import { FileBox } from 'file-box';
 import QRCode from "qrcode";
 import { Bot } from "./bot.js";
 import { displayMilliseconds } from "./utils.js";
 import { downloadImage } from "./mj-api.js";
+import { config } from "./config.js";
 
 import express, { Application, Request, Response } from "express";
 
@@ -66,23 +68,39 @@ app.post("/notify", async (req: Request, res: Response): Promise<Response> => {
     const status = req.body.status;
     const description = req.body.description;
     if (status == 'IN_PROGRESS') {
-      room.say(`@${userName} \n✅ 您的任务已提交\n✨ ${description}\n🚀 正在快速处理中，请稍后`);
+      room.say(`@${userName} \n✅ 您的任务已提交成功\n🚀 正在快速处理请稍后`);
     } else if (status == 'FAILURE') {
       room.say(`@${userName} \n❌ 任务执行失败\n✨ ${description}`);
     } else if (status == 'SUCCESS') {
       const time = req.body.finishTime - req.body.submitTime;
       if (action == 'UPSCALE') {
-        await room.say(`@${userName} \n🎨 图片放大，用时: ${displayMilliseconds(time)}\n✨ ${description}`);
+        await room.say(`@${userName} \n🎨 图片放大，用时: ${displayMilliseconds(time)}`);
 
-        const image =  await downloadImage(req.body.imageUrl);
+        let image:FileBox;
+
+        if (config.httpProxy == "") {
+          image = FileBox.fromUrl(req.body.imageUrl);
+        } else {
+          const savedFileName = await downloadImage(req.body.imageUrl);
+          image = FileBox.fromFile(savedFileName);
+        }
+
         room.say(image);
-
       } else {
         const taskId = req.body.id;
-        const prompt = req.body.prompt;
-        await room.say(`@${userName} \n🎨 ${action == 'IMAGINE' ? '绘图' : '变换'}成功，用时 ${displayMilliseconds(time)}\n✨ Prompt: ${prompt}\n📨 任务ID: ${taskId}\n🪄 放大 U1～U4 ，变换 V1～V4\n✏️ 使用[/up 任务ID 操作]\n/up ${taskId} U1`);
+        // const prompt = req.body.prompt;
+        // await room.say(`@${userName} \n🎨 ${action == 'IMAGINE' ? '绘图' : '变换'}成功，用时 ${displayMilliseconds(time)}\n✨任务ID: ${taskId}\n🪄 放大 U1～U4 ，变换 V1～V4\n✏️ 使用[/up 任务ID 操作]\n/up ${taskId} U1`);
+        await room.say(`@${userName} \n🎨 ${action == 'IMAGINE' ? '绘图' : '变换'}成功，用时 ${displayMilliseconds(time)}\n✨任务ID: ${taskId}\n 🍭放大：这里有四幅草图，请用 U+编号来告诉我您喜欢哪一张。例如，第一张为U1。我将会根据您的选择画出更精美的版本。\n 🤹‍♀️变换：如果您对所有的草图都不太满意，但是对其中某一张构图还可以，可以用 V+编号来告诉我，我会画出类似的四幅草图供您选择。\n🚁具体操作：[/up 编号 操作]，比如放大第一张\n/up ${taskId} U1`);
 
-        const image = await downloadImage(req.body.imageUrl);
+        let image:FileBox;
+
+        if (config.httpProxy == "") {
+          image = FileBox.fromUrl(req.body.imageUrl);
+        } else {
+          const savedFileName = await downloadImage(req.body.imageUrl);
+          console.log(`saved`);
+          image = FileBox.fromFile(savedFileName);
+        }
         room.say(image);
       }
     }
