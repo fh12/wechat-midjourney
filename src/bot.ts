@@ -16,22 +16,26 @@ export class Bot {
         if (!room) {
             return;
         }
-        // 有新用户加入群聊时，发送欢迎语
-        // if (/加入了群聊/.test(message.text()) || /加入群聊/.test(message.text())){
-        //     await room.say(`欢迎新朋友 @${talker.name()} 加入群聊, 本群福利一，无需魔法免费使用chatgpt，网址：https://www.xiaohuiai.top，本群福利二，限时体验midjourney绘画`);
-        //     return;
-        // }
         // 使用正则表达式匹配原始信息
-        // const pattern = /\[\/mj(.+?)\](.+?)\[\/mj\]/;
-        // const match = rawText.match(pattern);
-        // if(match) {
-        //     // 提取链接和文本
-        //     const link = match[1].trim();
-        //     const text = match[2].trim();
-        //     console.log("link", link)
-        //     console.log("text", text)
-        //     rawText = `/mj ${text} ${link}`;
-        // }
+        var pattern = /<a[^>]*>(.*?)<\/a>([^<]*)/g;
+        let matches = [];
+        let match;
+        // 使用正则表达式进行匹配
+        while ((match = pattern.exec(rawText)) !== null) {
+            var content1 = match[1];  // "<a>"标签内的内容
+            var content2 = match[2];  // 标签后的文本内容
+            matches.push(content1, content2);
+        }
+        if(matches.length > 0) {
+            // console.log("matches", matches);
+            rawText = `/mj`;
+            for(let i = 0; i < matches.length; i++) {
+                if(matches[i] != "") {
+                    rawText += `${matches[i]}`;
+                }
+            }
+        }
+        // console.log("rawText", rawText);
         
         const topic = await room.topic();
         if (isNonsense(talker, message.type(), rawText)) {
@@ -81,18 +85,36 @@ export class Bot {
         }
         let errorMsg;
         if (rawText.startsWith('/up ')) {
+            const actionObj: any = {
+                "U": "UPSCALE",
+                "V": "VARIATION",
+                "R": "REROLL"
+            }
             const content = rawText.substring(4);
+            const arr = content.split(' ');
+            const taskId = arr[0];
+            const actionStr = arr[1];
+            let action = ""
+            let index = undefined
+            if(actionStr.length === 1) {
+                action = "REROLL"
+            } else {
+                // index等于actionStr的第二个字符
+                index = actionStr.substring(1,2)
+                // action 等于actionStr的第一个字符对应的action
+                action = actionObj[actionStr.substring(0,1)]
+            }
             errorMsg = await submitTask({
+                taskId,
+                action,
+                index,
                 state: topic + ':' + talkerName,
-                action: "UV",
-                content: content,
                 notifyHook:"http://localhost:4120/notify"
             });
         } else if (rawText.startsWith('/mj ')) {
             const prompt = rawText.substring(4);
             errorMsg = await submitTask({
                 state: topic + ':' + talkerName,
-                action: "IMAGINE",
                 prompt: prompt,
                 notifyHook:"http://localhost:4120/notify"
             });

@@ -7,11 +7,11 @@ import * as fs from 'fs';
 import { Request } from "./request.js";
 
 const request = new Request({})
-
+const actions = ["UPSCALE","VARIATION","REROLL"]
 export async function submitTask(params: any): Promise<string> {
-    let url = "/trigger/submit";
-    if (params.action == 'UV') {
-        url = "/trigger/submit-uv";
+    let url = "/submit/imagine";
+    if (actions.includes(params.action)) {
+        url = "/submit/change";
     }
     try {
         const response = await request.post(url, params);

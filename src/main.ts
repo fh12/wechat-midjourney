@@ -90,7 +90,8 @@ app.post("/notify", async (req: Request, res: Response): Promise<Response> => {
         const taskId = req.body.id;
         // const prompt = req.body.prompt;
         // await room.say(`@${userName} \n🎨 ${action == 'IMAGINE' ? '绘图' : '变换'}成功，用时 ${displayMilliseconds(time)}\n✨任务ID: ${taskId}\n🪄 放大 U1～U4 ，变换 V1～V4\n✏️ 使用[/up 任务ID 操作]\n/up ${taskId} U1`);
-        await room.say(`@${userName} \n🎨 ${action == 'IMAGINE' ? '绘图' : '变换'}成功，用时 ${displayMilliseconds(time)}\n✨任务ID: ${taskId}\n 🍭放大：这里有四幅草图，请用 U+编号来告诉我您喜欢哪一张。例如，第一张为U1。我将会根据您的选择画出更精美的版本。\n 🤹‍♀️变换：如果您对所有的草图都不太满意，但是对其中某一张构图还可以，可以用 V+编号来告诉我，我会画出类似的四幅草图供您选择。\n🚁具体操作：[/up 编号 操作]，比如放大第一张\n/up ${taskId} U1`);
+        // await room.say(`@${userName} \n🎨 ${action == 'IMAGINE' ? '绘图' : '变换'}成功，用时 ${displayMilliseconds(time)}\n✨任务ID: ${taskId}\n 🍭放大：这里有四幅草图，请用 U+编号来告诉我您喜欢哪一张。例如，第一张为U1。我将会根据您的选择画出更精美的版本。\n 🤹‍♀️变换：如果您对所有的草图都不太满意，但是对其中某一张构图还可以，可以用 V+编号来告诉我，我会画出类似的四幅草图供您选择。\n🚁具体操作：[/up 编号 操作]，比如放大第一张\n/up ${taskId} U1`);
+        await room.say(`@${userName} \n🎨 ${action == 'IMAGINE' ? '绘图' : '变换'}成功，用时 ${displayMilliseconds(time)}\n🍭放大 U1～U4 ，变换 V1～V4, 重新生成 R\n/up ${taskId} U1`);
 
         let image:FileBox;
 
